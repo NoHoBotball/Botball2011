@@ -1,0 +1,64 @@
+#define BAUD_9600 2604
+#define BAUD_19K 1302
+#define BAUD_38K 651
+#define BAUD_57K 434
+#define IC_SERIAL 0
+
+//Set to any baud rate to disable IC Serial
+//Set to 0 to switch back to IC Mode
+
+int _serial_read_busy = 0, _serial_write_busy = 0;
+
+int serial_set_mode(int mode)
+{
+    return callml(178, mode);
+}
+
+//Puts a byte on the buffer to be written out
+void serial_write_byte(int byte)
+{
+    while(_serial_write_busy);
+    _serial_write_busy=1;
+    callml(181, byte);
+    _serial_write_busy=0;
+}
+
+//Put a string of bytes on the buffer to be written out
+void serial_write_string(char str[])
+{
+    int  i = 0, strlen = _array_size(str) - 1;
+    for (i = 0; i < strlen; ++i) serial_write_byte(str[i]);
+}   // serial_write_string(char [])
+
+//Returns 0 if there is nothing to be read
+int serial_read_byte() 
+{
+    int retVal = 0;
+    while(_serial_read_busy);
+    _serial_read_busy=1;
+    retVal = callml(180, 0);
+    _serial_read_busy=0;
+    if (retVal == -1) return 0;
+    return retVal;
+}
+
+//Returns the number of bytes on the incoming buffer
+int serial_buffer_count()
+{
+    return callml(179,0);
+}
+
+//Switches communication from built in serial port
+//to the extra serial connector at JP28
+void serial_set_extra(int enable)
+{
+    callml(182, enable);
+}
+
+//Returns the length for the parameterized string of characters
+int strlen(char str[])
+{
+    int size = _array_size(str) - 1;
+    if ((size - 1 >= 0) && (str[size - 1] == 0x00)) return size - 1;
+    return size;
+}   // strlen(char [])

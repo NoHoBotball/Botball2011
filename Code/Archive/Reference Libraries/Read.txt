@@ -1,0 +1,46 @@
+This was an email a long time ago from ross to ben. take a look at it.
+
+Hey Ben,
+
+You asked about the some sample libraries... well, here ya' go!  Attached are libraries that I wrote while at SIUE.  Note that these libraries were written in Interactive C (the predecessor to KISS-C) and, thus, likely do not compile immediately in KISS-C.  However, just looking at them, you should get an idea of what kinds of libraries you should implement.
+
+A majority of the underlying code that was used by our robots utilized various Interactive C libraries that I've written over the years.  The libraries were designed to be general enough so that they could work with a variety of different robots--simply specify some of the physical details of the robot in an easily modifiable configuration file, and the libraries figure out the rest!  Of course, with generality comes some code bulk -- these libraries will take up quite a bit of space on your microcontroller; however, it provides a very quick way to get started!  :-)
+
+I've attached a .ZIP file that contains many of the libraries I used to work with (and some sample applications, denoted by _'s in front of the filenames).  At first glance, it may be a bit intimidating looking at how many there are.  However, you'll find that they are actually quite easy to work with (once ported to KISS-C, of course).  If you would like to try using them, there are two steps you should start with:
+
+1) port the libraries from Interaction C (.ic files) to KISS-C (.c files) -- this will be a tedious process!
+2) modify the 'Config' file with the information relevant to your robot (if you need help, contact me)
+3) write a test file (in the same directory as the libraries!) that should look like this:
+
+// preprocessor directives
+#include "Navigation.c"
+
+// executes main program code
+int main()
+{
+
+   // drive a square path using all main movement commands
+   fwdFor(12.0);           // forward 12.0 inches
+   rotateRightFor(90.0);   // rotate right 90.0 degrees
+
+   revFor(12.0);           // reverse 12.0 inches
+   rotateLeftFor(90.0);    // rotate left 90.0 degrees
+
+   revFor(12.0);           // reverse 12.0 inches
+   rotateRightFor(90.0);   // rotate right 90.0 degrees
+
+   fwdFor(12.0);           // forward 12.0 inches
+   rotateLeftFor(90.0);    // rotate left 90.0 degrees
+   
+   return 0;
+}  // main()
+
+I think that this should help get you started.  Again, these will not compile right out of the gate -- you need to port the code to KISS-C; think of this more as a reference.  I would recommend re-implementing the Navigation library to start (as well as its #include dependencies).
+
+If you have any questions (as you undoubtedly will) or comments, please do not hesitate to contact me.
+
+Thanks, and good luck!  :-)
+
+
+*****
+Code is just text files so it is safe to just rename "*.ic" file extentions to "*.c"

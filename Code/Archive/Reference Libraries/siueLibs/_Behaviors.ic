@@ -1,0 +1,201 @@
+//
+// "Behaviors.ic"
+//
+// Programmer:    Ross Mead
+// Last modified: 29Dec2007
+//
+//
+
+// preprocessor directives
+#use "BehaviorTR.ic"
+#use "Navigation.ic"
+#use "Vector.ic"
+
+
+
+// behavior-based cell navigation debug definitions
+//#define DEBUG_BEHAVIORS 1
+
+
+
+// defines a 2-dimensional vector
+struct Vector   // IS NOT IMPORTED FROM "Vector.ic"!?!
+{
+    float x, y;
+};  // Vector
+
+
+
+// generates a behavior that moves the robot
+// using the parameterized target vector
+float behMoveVector(struct BehaviorTR* b, struct Vector* target)
+{
+    float r = 0.0, theta = 0.0;
+    
+    if ((b == NULL) || (target == NULL)) return 0.0;
+    
+    if (fisEqualToZero(r = getVectorMagnitude(target))) {
+        behMoveStop(b);
+        setBehaviorTRStatus(b, BEH_DONE);
+    }
+    else if (fisEqualToZero(theta =
+                            degreesToRadians(getVectorAngle(target))))
+      return behMoveForward(b, r);
+    else {
+        setBehaviorVel(b, r * theta / sin(theta),
+                       wheelOffsetDiameter() * theta);
+        setBehaviorTRStatus(b, BEH_ACTIVE);
+    }
+    
+    #ifdef DEBUG_CELL
+      printf("(t, r) = (%f, %f)\n", r, theta);
+    #endif
+    
+    return getBehaviorVelocity(b);
+}   // behMoveVector(struct BehaviorTR*, struct Vector*)
+
+
+
+// moves the robot using the parameterized target vector
+BOOL moveVector(struct Vector* target)
+{
+    struct BehaviorTR beh;
+    if ((target == NULL)        ||
+        (!initBehaviorTR(&beh)) ||
+        (!setBehaviorMaxSpeed(&beh, (float)motorMaxSpeed())))
+      return FALSE;
+    
+    do behMoveVector(&beh, target);
+    while (moveBehavior(&beh) && isBehaviorTRActive(&beh));
+    
+    return TRUE;
+}   // moveVector(struct Vector*)
+
+
+
+// generates a behavior that moves the robot forward
+// at the parameterized translational velocity
+float behMoveForward(struct BehaviorTR* b, float tVel)
+{
+    if (b == NULL) return 0.0;
+    
+    setBehaviorVel(b, tVel, 0.0);
+    setBehaviorTRStatus(b, BEH_ACTIVE);
+    
+    #ifdef DEBUG_CELL
+      printf("(t, r) = (%f, %f)\n", r, theta);
+    #endif
+    
+    return getBehaviorVelocity(b);
+}   // behMoveForward(struct BehaviorTR*, float)
+
+
+
+// moves the robot forward at the
+// parameterized translational velocity
+BOOL moveForward(float tVel)
+{
+    struct BehaviorTR beh;
+    if ((!initBehaviorTR(&beh)) ||
+        (!setBehaviorMaxSpeed(&beh, (float)motorMaxSpeed())))
+      return FALSE;
+    
+    do behMoveForward(&beh, tVel);
+    while (moveBehavior(&beh) && isBehaviorTRActive(&beh));
+    
+    return TRUE;
+}   // moveForward(float)
+
+
+
+// generates a behavior that moves the robot backward
+// at the parameterized translational velocity
+float behMoveBackward(struct BehaviorTR* b, float tVel)
+{
+    if (b == NULL) return 0.0;
+    
+    setBehaviorVel(b, -tVel, 0.0);
+    setBehaviorTRStatus(b, BEH_ACTIVE);
+    
+    #ifdef DEBUG_CELL
+      printf("(t, r) = (%f, %f)\n", r, theta);
+    #endif
+    
+    return getBehaviorVelocity(b);
+}   // behMoveBackward(struct BehaviorTR*, float)
+
+
+
+// moves the robot backward at the
+// parameterized translational velocity
+BOOL moveBackward(float tVel)
+{
+    struct BehaviorTR beh;
+    if ((!initBehaviorTR(&beh)) ||
+        (!setBehaviorMaxSpeed(&beh, (float)motorMaxSpeed())))
+      return FALSE;
+    
+    do behMoveBackward(&beh, tVel);
+    while (moveBehavior(&beh) && isBehaviorTRActive(&beh));
+    
+    return TRUE;
+}   // moveForward(float)
+
+
+
+// generates a behavior that stops the robot from moving
+float behMoveStop(struct BehaviorTR* b)
+{
+    if (b == NULL) return 0.0;
+    
+    setBehaviorVel(b, 0.0, 0.0);
+    setBehaviorTRStatus(b, BEH_ACTIVE);
+    
+    #ifdef DEBUG_CELL
+      printf("(t, r) = (%f, %f)\n", r, theta);
+    #endif
+    
+    return getBehaviorVelocity(b);
+}   // behMoveStop(struct BehaviorTR*)
+
+
+
+// stops the robot from moving
+BOOL moveStop()
+{
+    struct BehaviorTR beh;
+    if ((!initBehaviorTR(&beh)) ||
+        (!setBehaviorMaxSpeed(&beh, (float)motorMaxSpeed())))
+      return FALSE;
+    
+    do behMoveStop(&beh);
+    while (moveBehavior(&beh) && isBehaviorTRActive(&beh));
+    
+    return TRUE;
+}   // moveStop()
+
+
+
+// moves the robot based on the parameterized behavior,
+// returning TRUE if successful, FALSE otherwise
+BOOL moveBehavior(struct BehaviorTR* b)
+{
+    if (b == NULL) return FALSE;
+    if (isBehaviorTRActive(b))
+      moveAt((int)getBehaviorLeftVelocity( b),
+             (int)getBehaviorRightVelocity(b));
+    else brake();
+    return TRUE;
+}   // moveBehavior(struct BehaviorTR*)
+
+
+
+#ifdef DEBUG_BEHAVIORS
+int main()
+{
+    while (!b_button()) {
+        display_clear();
+    }
+    return 0;
+}   // main()
+#endif

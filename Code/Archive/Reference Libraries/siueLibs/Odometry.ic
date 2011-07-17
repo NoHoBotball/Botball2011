@@ -1,0 +1,465 @@
+//
+// "Odometry.ic"
+//
+// Programmer:    Ross Mead
+// Last modified: 15Jul2007
+//
+
+// preprocessor directives
+#use "Motors.ic"
+#use "Wheels.ic"
+
+
+
+// odometry definitions
+float INCHES_PER_TICK = wheelCircumference() / (float)ticksPerRevolution();
+
+
+
+// brakes the left motor(s)
+void brakeLeft()
+{
+    if (enabledBackEMF()) {
+        #ifdef MOTOR_L0_PORT
+          brakeMotor(MOTOR_L0_PORT);
+        #endif
+        
+        #ifdef MOTOR_L1_PORT
+          brakeMotor(MOTOR_L1_PORT);
+        #endif
+    }
+    else {
+        #ifdef MOTOR_L0_PORT
+          setMotorVelocity(MOTOR_L0_PORT, -getMotorVelocityArray(MOTOR_L0_PORT));
+        #endif
+        
+        #ifdef MOTOR_L1_PORT
+          setMotorVelocity(MOTOR_L1_PORT, -getMotorVelocityArray(MOTOR_L1_PORT));
+        #endif
+        
+        #ifdef MOTOR_BRAKE_SLEEP
+          sleep(MOTOR_BRAKE_SLEEP);
+        #endif
+        
+        #ifdef MOTOR_L0_PORT
+          setMotorVelocity(MOTOR_L0_PORT, 0);
+        #endif
+        
+        #ifdef MOTOR_L1_PORT
+          setMotorVelocity(MOTOR_L1_PORT, 0);
+        #endif
+    }
+}   // brakeLeft()
+
+
+
+// brakes the right motor(s)
+void brakeRight()
+{
+    if (enabledBackEMF()) {
+        #ifdef MOTOR_R0_PORT
+          brakeMotor(MOTOR_R0_PORT);
+        #endif
+        
+        #ifdef MOTOR_R1_PORT
+          brakeMotor(MOTOR_R1_PORT);
+        #endif
+    }
+    else {
+        #ifdef MOTOR_R0_PORT
+          setMotorVelocity(MOTOR_R0_PORT, -getMotorVelocityArray(MOTOR_R0_PORT));
+        #endif
+        
+        #ifdef MOTOR_R1_PORT
+          setMotorVelocity(MOTOR_R1_PORT, -getMotorVelocityArray(MOTOR_R1_PORT));
+        #endif
+        
+        #ifdef MOTOR_BRAKE_SLEEP
+          sleep(MOTOR_BRAKE_SLEEP);
+        #endif
+        
+        #ifdef MOTOR_R0_PORT
+          setMotorVelocity(MOTOR_R0_PORT, 0);
+        #endif
+        
+        #ifdef MOTOR_R1_PORT
+          setMotorVelocity(MOTOR_R1_PORT, 0);
+        #endif
+    }
+}   // brakeRight()
+
+
+
+// returns the value of the parameterized centimeters in odometry ticks
+long centimetersToTicks(float centimeters)
+{
+    return millimetersToTicks(centimetersToMillimeters(centimeters));
+}   // centimetersToTicks(float)
+
+
+
+// returns the value of the parameterized degrees in odometry ticks
+long degreesToTicks(float degrees)
+{
+    return inchesToTicks(degreesToInches(degrees));
+}   // degreesToTicks(float)
+
+
+
+// returns the position of the left motor(s)
+long getLeftPosition()
+{
+    long pos    = 0L;
+    int  nPorts = 0;
+    
+    #ifdef MOTOR_L0_PORT
+      pos      += getMotorPosition(MOTOR_L0_PORT);
+    ++nPorts;
+    #endif
+    
+    #ifdef MOTOR_L1_PORT
+      pos      += getMotorPosition(MOTOR_L1_PORT);
+    ++nPorts;
+    #endif
+    
+    if (nPorts > 0) return pos / (long)nPorts;
+    return pos;
+}   // getLeftPosition()
+
+
+
+// returns the velocity of the left motor(s)
+int getLeftVelocity()
+{
+    int vel = 0, nPorts = 0;
+    
+    #ifdef MOTOR_L0_PORT
+      vel  += getMotorVelocity(MOTOR_L0_PORT);
+    ++nPorts;
+    #endif
+    
+    #ifdef MOTOR_L1_PORT
+      vel  += getMotorVelocity(MOTOR_L1_PORT);
+    ++nPorts;
+    #endif
+    
+    if (nPorts > 0) return vel / nPorts;
+    return vel;
+}   // getLeftVelocity()
+
+
+
+// returns the position of the right motor(s)
+long getRightPosition()
+{
+    long pos    = 0L;
+    int  nPorts = 0;
+    
+    #ifdef MOTOR_R0_PORT
+      pos      += getMotorPosition(MOTOR_R0_PORT);
+    ++nPorts;
+    #endif
+    
+    #ifdef MOTOR_R1_PORT
+      pos      += getMotorPosition(MOTOR_R1_PORT);
+    ++nPorts;
+    #endif
+    
+    if (nPorts > 0) return pos / (long)nPorts;
+    return pos;
+}   // getRightPosition()
+
+
+
+// returns the velocity of the right motor(s)
+int getRightVelocity()
+{
+    int vel = 0, nPorts = 0;
+    
+    #ifdef MOTOR_R0_PORT
+      vel  += getMotorVelocity(MOTOR_R0_PORT);
+    ++nPorts;
+    #endif
+    
+    #ifdef MOTOR_R1_PORT
+      vel  += getMotorVelocity(MOTOR_R1_PORT);
+    ++nPorts;
+    #endif
+    
+    if (nPorts > 0) return vel / nPorts;
+    return vel;
+}   // getRightVelocity()
+
+
+
+// returns the rotational velocity
+int getRotationalVelocity()
+{
+    return getRightVelocity() - getLeftVelocity();
+}   // getRotationalVelocity()
+
+
+
+// returns the translational velocity
+int getTranslationalVelocity()
+{
+    return (getRightVelocity() + getLeftVelocity()) / 2;
+}   // getRotationalVelocity()
+
+
+
+// returns the number of inches per odometry tick
+float inchesPerTick()
+{
+    return INCHES_PER_TICK;
+}   // inchesPerClick(float)
+
+
+
+// returns the value of the parameterized inches in odometry ticks
+long inchesToTicks(float inches)
+{
+    return (long)(inches / inchesPerTick());
+}   // inchesToTicks(float)
+
+
+
+// returns the value of the parameterized millimeters in odometry ticks
+long millimetersToTicks(float millimeters)
+{
+    return inchesToTicks(millimetersToInches(millimeters));
+}   // millimetersToTicks(float)
+
+
+
+// prints the position in centimeters to the LCD
+void printPositionCentimeters()
+{
+    printf("L>%f cm., R>%f cm.\n",
+           ticksToCentimeters(getLeftPosition()),
+           ticksToCentimeters(getRightPosition()));
+}   // printPositionCentimeters()
+
+
+
+// prints the position in inches to the LCD
+void printPositionInches()
+{
+    printf("L>%f in., R>%f in.\n",
+           ticksToInches(getLeftPosition()),
+           ticksToInches(getRightPosition()));
+}   // printPositionInches()
+
+
+
+// prints the position in millimeters to the LCD
+void printPositionMillimeters()
+{
+    printf("L>%f mm., R>%f mm.\n",
+           ticksToMillimeters(getLeftPosition()),
+           ticksToMillimeters(getRightPosition()));
+}   // printPositionMillimeters()
+
+
+
+// prints the position in ticks to the LCD
+void printPositionTicks()
+{
+    printf("L>%d, R>%d\n", getLeftPosition(), getRightPosition());
+}   // printPositionTicks()
+
+
+
+// returns the value of the parameterized radians in odometry ticks
+long radiansToTicks(float radians)
+{
+    return inchesToTicks(radiansToInches(radians));
+}   // radiansToTicks(float)
+
+
+
+// resets the position of the left motor(s)
+void resetLeftPosition()
+{
+    setLeftPosition(0L);
+}   // resetLeftPosition()
+
+
+
+// resets the odometry
+void resetPositions()
+{
+    resetLeftPosition();
+    resetRightPosition();
+}   // resetPositions()
+
+
+
+// resets the position of the right motor(s)
+void resetRightPosition()
+{
+    setRightPosition(0L);
+}   // resetRightPosition()
+
+
+
+// sets the position of the left motor(s)
+// to the parameterized position
+void setLeftPosition(long pos)
+{
+    #ifdef MOTOR_L0_PORT
+      setMotorPosition(MOTOR_L0_PORT, pos);
+    #endif
+    
+    #ifdef MOTOR_L1_PORT
+      setMotorPosition(MOTOR_L1_PORT, pos);
+    #endif
+}   // setLeftPosition(long)
+
+
+
+// sets the velocity of the left motor(s)
+// to the parameterized velocity
+void setLeftVelocity(int vel)
+{
+    #ifdef MOTOR_L0_PORT
+      setMotorVelocity(MOTOR_L0_PORT, vel);
+    #endif
+    
+    #ifdef MOTOR_L1_PORT
+      setMotorVelocity(MOTOR_L1_PORT, vel);
+    #endif
+}   // setLeftVelocity(int)
+
+
+
+// sets the speed of the left motor(s) to the parameterized
+// speed for the parameterized number of ticks
+void setLeftFor(int speed, long ticks)
+{
+    speed = abs(speed);
+    
+    #ifdef MOTOR_L0_PORT
+      setMotorFor(MOTOR_L0_PORT, speed, ticks);
+    #endif
+    
+    #ifdef MOTOR_L1_PORT
+      setMotorFor(MOTOR_L1_PORT, speed, ticks);
+    #endif
+}   // setLeftFor(int, long)
+
+
+
+// sets the odometry to the parameterized number of ticks
+void setPositions(long lPos, long rPos)
+{
+    setLeftPosition( lPos);
+    setRightPosition(rPos);
+}   // setPositions(long)
+
+
+
+// sets the position of the right motor(s)
+// to the parameterized position
+void setRightPosition(long pos)
+{
+    #ifdef MOTOR_R0_PORT
+      setMotorPosition(MOTOR_R0_PORT, pos);
+    #endif
+    
+    #ifdef MOTOR_R1_PORT
+      setMotorPosition(MOTOR_R1_PORT, pos);
+    #endif
+}   // setRightPosition(long)
+
+
+
+// sets the velocity of the right motor(s)
+// to the parameterized velocity
+void setRightVelocity(int vel)
+{
+    #ifdef MOTOR_R0_PORT
+      setMotorVelocity(MOTOR_R0_PORT, vel);
+    #endif
+    
+    #ifdef MOTOR_R1_PORT
+      setMotorVelocity(MOTOR_R1_PORT, vel);
+    #endif
+}   // setRightVelocity(int)
+
+
+
+// sets the speed of the right motor(s) to the parameterized
+// speed for the parameterized number of ticks
+void setRightFor(int speed, long ticks)
+{
+    speed = abs(speed);
+    
+    #ifdef MOTOR_R0_PORT
+      setMotorFor(MOTOR_R0_PORT, speed, ticks);
+    #endif
+    
+    #ifdef MOTOR_R1_PORT
+      setMotorFor(MOTOR_R1_PORT, speed, ticks);
+    #endif
+}   // setRightFor(int, long)
+
+
+
+// returns the number of ticks per revolution
+long ticksPerRevolution()
+{
+    return TICKS_PER_REV;
+}   // ticksPerRevolution()
+
+
+
+// returns the value of the parameterized odometry ticks in centimeters
+float ticksToCentimeters(long ticks)
+{
+    return inchesToCentimeters(ticksToInches(ticks));
+}   // ticksToCentimeters(long)
+
+
+
+// returns the value of the parameterized odometry ticks in inches
+float ticksToInches(long ticks)
+{
+    return (float)ticks * inchesPerTick();
+}   // ticksToInches(long)
+
+
+
+// returns the value of the parameterized odometry ticks in millimeters
+float ticksToMillimeters(long ticks)
+{
+    return inchesToMillimeters(ticksToInches(ticks));
+}   // ticksToMillimeters(long)
+
+
+
+// waits for the left motor(s) to finish moving
+void waitForLeftDone()
+{
+    #ifdef MOTOR_L0_PORT
+      waitForMotorDone(MOTOR_L0_PORT);
+    #endif
+    
+    #ifdef MOTOR_L1_PORT
+      waitForMotorDone(MOTOR_L1_PORT);
+    #endif
+}   // waitForLeftDone()
+
+
+
+// waits for the right motor(s) to finish moving
+void waitForRightDone()
+{
+    #ifdef MOTOR_R0_PORT
+      waitForMotorDone(MOTOR_R0_PORT);
+    #endif
+    
+    #ifdef MOTOR_R1_PORT
+      waitForMotorDone(MOTOR_R1_PORT);
+    #endif
+}   // waitForRightDone()

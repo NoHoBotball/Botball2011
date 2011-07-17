@@ -1,0 +1,80 @@
+//
+// "_OdometryTrackerTest.ic"
+//
+// Programmer:    Ross Mead
+// Last modified: 06Nov2007
+//
+
+// preprocessor directives
+#use "Navigation.ic"
+#use "OdometryTracker.ic"
+
+
+
+// executes odometry tracker debug code
+int main()
+{
+    int pidMonitor = -1;
+    enableOdometryTracker();
+    pidMonitor = start_process(_monitorPoseProcess());
+    while (!b_button()) {
+        if (a_button()) {
+            while (a_button());
+            fwdFor(12.0);
+            sleep(0.1);
+            rotateRightFor(90.0);
+            sleep(0.1);
+            revFor(12.0);
+            sleep(0.1);
+            rotateLeftFor(270.0);
+            sleep(0.1);
+            fwdFor(12.0);
+            sleep(0.1);
+            rotateRightFor(90.0);
+            sleep(0.1);
+            revFor(12.0);
+            sleep(0.1);
+            rotateLeftFor(180.0);
+            sleep(0.1);
+        }
+        else if (up_button()) {
+            while (up_button());
+            fwdFor(12.0);
+            sleep(0.1);
+        }
+        else if (down_button()) {
+            while (down_button());
+            revFor(12.0);
+            sleep(0.1);
+        }
+        else if (left_button()) {
+            while (left_button());
+            rotateLeftFor(90.0);
+            sleep(0.1);
+        }
+        else if (right_button()) {
+            while (right_button());
+            rotateRightFor(90.0);
+            sleep(0.1);
+        }
+    }
+    kill_process(pidMonitor);
+    disableOdometryTracker();
+    printf("Done!\n");
+    return 0;
+}   // main()
+
+
+
+// process that monitors the pose of the robot
+BOOL _monitorPoseProcess()
+{
+    while (TRUE) {
+        display_clear();
+        printRobotPose("_robotPose");
+        printf("_distTraveled: %f\n", getDistanceTraveled());
+        sleep(0.1);
+        defer();
+    }
+    return TRUE;
+}   // _monitorPoseProcess()

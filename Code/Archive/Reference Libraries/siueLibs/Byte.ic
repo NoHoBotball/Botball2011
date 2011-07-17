@@ -1,0 +1,173 @@
+//
+// "Byte.ic"
+//
+// Programmer:    Ross Mead
+// Last modified: 06Jul2007
+//
+
+// preprocessor directives
+#use "Math.ic"
+
+
+
+// byte definitions
+#define BYTE        int
+
+
+
+// minimum/maximum byte definitions
+int     MIN_BYTE  = 0x00;
+int     MAX_BYTE  = 0xFF;
+
+
+
+// undefined number definitions
+#define B_UNDEFINED MAX_BYTE
+
+
+
+// numerical data type byte size definitions
+#define I_BYTE_SIZE 2
+#define L_BYTE_SIZE 4
+#define F_BYTE_SIZE 4
+
+
+
+// positive/negative byte definitions
+#define BYTE_POS    0x00
+#define BYTE_NEG    0x01
+
+
+
+// bit-shifts the parameterized integer to the
+// left by the parameterized number of bits
+int bitShiftLeft(int i, int nBits)
+{
+    return i << nBits;
+}   // bitShiftLeft(int, int)
+
+
+
+// bit-shifts the parameterized integer to the
+// right by the parameterized number of bits
+int bitShiftRight(int i, int nBits)
+{
+    return i >> nBits;
+}   // bitShiftLeft(int, int)
+
+
+
+// byte-shifts the parameterized integer to the
+// left by the parameterized number of bits
+int byteShiftLeft(int i, int nBytes)
+{
+    return bitShiftLeft(i, 8 * nBytes);
+}   // byteShiftLeft(int, int)
+
+
+
+// byte-shifts the parameterized integer to the
+// right by the parameterized number of bits
+int byteShiftRight(int i, int nBytes)
+{
+    return bitShiftRight(i, 8 * nBytes);
+}   // byteShiftLeft(int, int)
+
+
+
+// returns the integer value of the parameterized bytes
+int bytesToInt(BYTE msb, BYTE lsb)
+{
+    return byteShiftLeft(msb, 1) + lsb;
+}   // bytesToInt(BYTE, BYTE)
+
+
+
+// returns the long integer value of the parameterized bytes
+long bytesToLong(BYTE byte3, BYTE byte2, BYTE byte1, BYTE byte0)
+{
+    return lbyteShiftLeft((long)byte3, 3) +
+      lbyteShiftLeft(     (long)byte2, 2) +
+      lbyteShiftLeft(     (long)byte1, 1) +
+      (long)byte0;
+}   // bytesToLong(BYTE, BYTE, BYTE, BYTE)
+
+
+
+// returns the byte at the parameterized byte-index
+// of the parameterized integer
+BYTE getByte(int i, int index)
+{
+    if (index >= I_BYTE_SIZE) return 0x00;
+    return (BYTE)(byteShiftRight(i, index) -
+                  byteShiftLeft(byteShiftRight(i, index + 1), 1));
+}   // getByte(int, int)
+
+
+
+// returns the byte at the parameterized byte-index
+// of the parameterized long integer
+BYTE lgetByte(long l, int index)
+{
+    if (index >= L_BYTE_SIZE) return 0x00;
+    return (BYTE)((lbyteShiftRight(l, index) -
+                   lbyteShiftLeft(lbyteShiftRight(l, index + 1), 1)));
+}   // lgetByte(long, int)
+
+
+
+// returns the least significant byte (LSB) of the parameterized integer
+BYTE lsb(int i)
+{
+    return getByte(i, 0);
+}   // lsb(int)
+
+
+
+// bit-shifts the parameterized long integer to the
+// left by the parameterized number of bits
+long lbitShiftLeft(long l, int nBits)
+{
+    int i = 0;
+    if (nBits < 0) return l;
+    for (i = 0; i < nBits; ++i) l *= 2L;
+    return l;
+}   // lbitShiftLeft(long, int)
+
+
+
+// bit-shifts the parameterized long integer to the
+// right by the parameterized number of bits
+long lbitShiftRight(long l, int nBits)
+{
+    int i = 0;
+    if (nBits < 0) return l;
+    for (i = 0; i < nBits; ++i) l /= 2L;
+    return l;
+}   // lbitShiftLeft(long, int)
+
+
+
+// byte-shifts the parameterized long integer to the
+// left by the parameterized number of bits
+long lbyteShiftLeft(long l, int nBytes)
+{
+    return lbitShiftLeft(l, 8 * nBytes);
+}   // lbyteShiftLeft(long, int)
+
+
+
+// byte-shifts the parameterized long integer to the
+// right by the parameterized number of bits
+long lbyteShiftRight(long l, int nBytes)
+{
+    return lbitShiftRight(l, 8 * nBytes);
+}   // lbyteShiftLeft(long, int)
+
+
+
+// returns the most significant byte (MSB) of the parameterized integer
+BYTE msb(int i)
+{
+    return getByte(i, 1);
+}   // msb(int)

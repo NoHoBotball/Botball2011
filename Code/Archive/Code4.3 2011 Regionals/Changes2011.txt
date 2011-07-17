@@ -1,0 +1,21 @@
+Notes:	1)	Please view this file through KISS-C to see in proper format
+		2)	*  = Ask Ross about this
+			** = Asked Ross + Problem is fixed
+		3)	In Genral, if you dont understand something, then DO NOT CHANGE IT; the most you should do in this case is to comment it out, work around it, and/or ask somebody who knows better later
+#	MM-DD	PST		Last Name	Changes
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+001	04-09	21:10	McGee, JM	Began to integrate Ross libraries into our Code.  Ross files are to be named "ross.FILENAME.h".  DO NOT modify them without BOTH recording your changes AND
+									saving a copy of the pre-modified file.  Also added files with lists of function declarations.
+002	04-10	13:53	''			Consolidated list of function defintions of Ross libraries- the ones I found immediately relevant- into one file, "ross.Declarations.h".  Each library file has a
+									section in Declarations file that is inlcuded if the relevant file is included.  Each section of the declarations file is surrounded by definition guards to ensure
+									that it is compliled once and only once.
+003	''		14:30	''			Uncommented a bunch of functions from both Declarations and their container lib files because they were declared/defined with conflicting parameters in an automatically
+									included file, often "%INST_PATH%\targets\gcc\mingw\include\math.h"
+004	''		''		''			*For some reason the "int max(...)" and "int min(...)" functions do not work.  Not really sure why but I just uncommented them.
+005	''		''		''			*Last problem in "ross.Math.h". For some reason the global declarations on lines 32-36 generate a weird error that Ive never seen before:
+									"inializer element is not constant". It might be because the defintions include calls to functions, this may not be allowed in C89.	For now Im just going to change
+									them to defines.
+006	''		3:50	''			*Line92 in "ross.Motors.h", I commented out setMotorPosition because set_motor_postition_counter(...) is no longer vaild in the current implementation of KISS-C
+									Accordingly, I also changed "return setMotorPosition(port, 0L);"(84) to "clear_motor_position_counter(port); return get_motor_position_counter(port);"(84-45)
+007	''		6:10	''			I have finished formatting Rosss following *.ic files: Circles, Boolean, Config, Math, Motors, Random, Servo, Vector, Wheels, Metrics, and Buttons.  I will now change
+									the version from 4.3 to 4.4 as I begin to integrate Rosss funciots into our code

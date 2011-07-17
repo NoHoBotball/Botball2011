@@ -1,0 +1,78 @@
+//
+// "Buttons.ic"
+//
+// Programmer:    Ross Mead
+// Last modified: 07Mar2007
+//
+
+
+
+// waits for the A button to be pressed and depressed
+void a_press()
+{
+    while (!a_button());
+    while (a_button());
+}   // a_press()
+
+
+
+// waits for the B button to be pressed and depressed
+void b_press()
+{
+    while (!b_button());
+    while (b_button());
+}   // b_press()
+
+
+
+// waits for the down button to be pressed and depressed
+void down_press()
+{
+    while (!down_button());
+    while (down_button());
+}   // down_press()
+
+
+
+// waits for the L button to be pressed and depressed
+void l_press()
+{
+    while (!l_button());
+    while (l_button());
+}   // l_press()
+
+
+
+// waits for the left button to be pressed and depressed
+void left_press()
+{
+    while (!left_button());
+    while (left_button());
+}   // left_press()
+
+
+
+// waits for the R button to be pressed and depressed
+void r_press()
+{
+    while (!r_button());
+    while (r_button());
+}   // r_press()
+
+
+
+// waits for the right button to be pressed and depressed
+void right_press()
+{
+    while (!right_button());
+    while (right_button());
+}   // right_press()
+
+
+
+// waits for the up button to be pressed and depressed
+void up_press()
+{
+    while (!up_button());
+    while (up_button());
+}   // right_press()

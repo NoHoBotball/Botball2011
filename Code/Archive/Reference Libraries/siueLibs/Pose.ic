@@ -1,0 +1,162 @@
+//
+// "Pose.ic"
+//
+// Programmer:    Ross Mead
+// Last modified: 06Nov2007
+//
+
+// preprocessor directives
+#use "Vector.ic"
+
+
+
+// pose debug definitions
+//#define DEBUG_POSE 1
+
+
+
+// defines a 2-dimensional vector
+struct Vector
+{
+    float x, y;
+};  // Vector
+
+
+
+// defines a 2-dimensional robot pose,
+// which includes position and heading
+#define Position struct Vector
+#define Heading  struct Vector
+struct Pose
+{
+    Position position;
+    Heading  heading;
+};  // Pose
+
+
+
+// initializes the parameterized pose,
+// returning TRUE if successful, FALSE otherwise
+BOOL initPose(struct Pose* p)
+{
+    return setPose(p, 0.0, 0.0, 0.0);
+}   // initPose(struct Pose*)
+
+
+
+// sets the parameterized pose to the parameterized
+// x-/y-/theta-values, returning TRUE if successful, FALSE otherwise
+BOOL setPose(struct Pose* p, float dx, float dy, float theta)
+{
+    return setPosePosition(p, dx, dy) && setPoseHeading(p, theta);
+}   // setPose(struct Pose*, float, float, theta)
+
+
+
+// sets the parameterized pose to the parameterized position
+// returning TRUE if successful, FALSE otherwise
+BOOL setPosePosition(struct Pose* p, float dx, float dy)
+{
+    if (p == NULL) return FALSE;
+    return setVector(&p->position, dx, dy);
+}   // setPosePosition(struct Pose*, float, float)
+
+
+
+// sets the parameterized pose to the parameterized heading
+// returning TRUE if successful, FALSE otherwise
+BOOL setPoseHeading(struct Pose* p, float theta)
+{
+    if (p == NULL) return FALSE;
+    return setVectorPolar(&p->heading, 1.0, theta);
+}   // setPoseHeading(struct Pose*, float)
+
+
+
+// copies the contents of the parameterized source
+// pose into the parameterized destination pose,
+// returning TRUE if successful, FALSE otherwise
+BOOL copyPose(struct Pose* src, struct Pose* dest)
+{
+    if ((src == NULL) || (dest == NULL)) return FALSE;
+    return setVector(&dest->position, src->position.x, src->position.y) &&
+      setVector(     &dest->heading,  src->heading.x,  src->heading.y);
+}   // copyPose(struct Pose*, struct Pose*)
+
+
+
+// translates the parameterized pose relative to
+// itself based on the parameterized x-/y-values,
+// returning TRUE if successful, FALSE otherwise
+BOOL translatePose(struct Pose* p, float dx, float dy)
+{
+    if (p == NULL) return FALSE;
+    return setPosePosition(p, p->position.x + dx, p->position.y + dy);
+}   // translatePose(struct Pose*, float, float)
+
+
+
+// rotates the parameterized pose relative to
+// itself based on the parameterized angle,
+// returning TRUE if successful, FALSE otherwise
+BOOL rotatePose(struct Pose* p, float theta)
+{
+    if (p == NULL) return FALSE;
+    return rotateVector(&p->heading, theta);
+}   // rotatePose(struct Pose*, float)
+
+
+// returns the x-position of the parameterized pose
+float getPoseX(struct Pose* p)
+{
+    if (p == NULL) return 0.0;
+    return p->position.x;
+}   // getPoseX(struct Pose*)
+
+
+// returns the y-position of the parameterized pose
+float getPoseY(struct Pose* p)
+{
+    if (p == NULL) return 0.0;
+    return p->position.y;
+}   // getPoseY(struct Pose*)
+
+
+// returns the heading of the parameterized pose
+float getPoseHeading(struct Pose* p)
+{
+    if (p == NULL) return 0.0;
+    return getVectorAngle(&p->heading);
+}   // getPoseHeading(struct Pose*)
+
+
+
+// compares the two parameterized poses for equality,
+// returning TRUE if they are the same, FALSE otherwise
+BOOL comparePoses(struct Pose* p1, struct Pose* p2)
+{
+    if ((p1 == NULL) || (p2 == NULL)) return FALSE;
+    return compareVectors(&p1->position, &p2->position) &&
+      fcompare(getPoseHeading(p1), getPoseHeading(p2));
+}   // comparePoses(struct Pose*, struct Pose*)
+
+
+
+// prints the parameterized pose (with an optional label) to the screen,
+// returning TRUE if successful, FALSE otherwise
+BOOL printPose(struct Pose* p, char label[])
+{
+    if (p == NULL) return FALSE;
+    printf("%s:\n~ (%f, %f)\n~ [%f]\n", label,
+           getPoseX(p), getPoseY(p), getPoseHeading(p));
+    return TRUE;
+}   // printPose(struct Pose*, char [])
+
+
+
+#ifdef DEBUG_POSE
+int main()
+{
+    return 0;
+}   // main()
+#endif

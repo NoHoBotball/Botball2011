@@ -1,0 +1,145 @@
+//
+// "Turret.ic"
+//
+// Programmer:    Ross Mead
+// Last modified: 09Jul2007
+//
+
+// preprocessor directives
+#use "Circles.ic"
+#use "Servo.ic"
+
+
+
+// turret debug definitions
+//#define DEBUG_TURRET    1
+
+
+
+// servo port definitions
+#define SERVO_PAN_PORT  2
+#define SERVO_TILT_PORT 3
+
+
+
+// turret (pan servo) min/max definitions
+#define SERVO_PAN_MIN   0
+#define SERVO_PAN_MAX   244
+#define SERVO_PAN_0     24
+#define SERVO_PAN_180   240
+
+
+
+// turret (tilt servo) min/max definitions
+#define SERVO_TILT_MIN  0
+#define SERVO_TILT_MAX  240
+#define SERVO_TILT_0    18
+#define SERVO_TILT_180  218
+
+
+
+// turret movement interval definitions
+#define TURRET_INTERVAL 5.0
+
+
+
+// defines a servo
+struct Servo
+{
+    int   port, minPosition, maxPosition;
+    float minAngle, maxAngle;
+};  // Servo
+
+
+
+// servo definitions
+struct Servo SERVO_PAN  = {
+    SERVO_PAN_PORT,  SERVO_PAN_0,  SERVO_PAN_180,  0.0, 180.0};
+struct Servo SERVO_TILT = {
+    SERVO_TILT_PORT, SERVO_TILT_0, SERVO_TILT_180, 0.0, 180.0};
+
+
+
+// sets the angle of the turret to the parameterized angle
+void setTurretAngle(float angle)
+{
+    angle = scaleDegrees(angle);
+    if (angle >= 0.0) {
+        setServoAngle(&SERVO_PAN,  angle);
+        setServoAngle(&SERVO_TILT, 0.0);
+    }
+    else {
+        setServoAngle(&SERVO_PAN,  180.0 + angle);
+        setServoAngle(&SERVO_TILT, 180.0);
+    }
+}   // setTurretAngle(float)
+
+
+
+// increments the angle of the turret by the parameterized angle
+void incTurretAngle(float angle)
+{
+    setTurretAngle(getTurretAngle() + angle);
+}   // incTurretAngle(float)
+
+
+
+// decrements the angle of the turret by the parameterized angle
+void decTurretAngle(float angle)
+{
+    incTurretAngle(-angle);
+}   // decTurretAngle(float)
+
+
+
+// returns the angle of the turret
+float getTurretAngle()
+{
+    if (fisEqualToZero(getServoAngle(&SERVO_TILT)))
+      return getServoAngle(&SERVO_PAN);
+    return getServoAngle(&SERVO_PAN) - 180.0;
+}   // getTurretAngle()
+
+
+
+// prints the turret to the screen
+BOOL printTurret()
+{
+    if (!(isServoValid(&SERVO_PAN) && (isServoValid(&SERVO_TILT))))
+      return FALSE;
+    printf("Turret@%f\n", getTurretAngle());
+    printf("- PAN =%f(%d)\n",
+           getServoAngle(&SERVO_PAN),  getServoPosition(&SERVO_PAN));
+    printf("- TILT=%f(%d)\n",
+           getServoAngle(&SERVO_TILT), getServoPosition(&SERVO_TILT));
+    return TRUE;
+}   // printServo(struct Servo*, char [])
+
+
+
+#ifdef DEBUG_TURRET
+int main()
+{
+    float angle = 0.0;
+    
+    enable_servos();
+    setTurretAngle(angle);
+    while (!b_button()) {
+        display_clear();
+        
+        if      (left_button()) {
+            angle += TURRET_INTERVAL;
+            setTurretAngle(angle);
+        }
+        else if (right_button()) {
+            angle -= TURRET_INTERVAL;
+            setTurretAngle(angle);
+        }
+        
+        printf("angle = %f\n", angle);
+        printTurret();
+        sleep(0.1);
+    }
+    disable_servos();
+}   // main()
+#endif
