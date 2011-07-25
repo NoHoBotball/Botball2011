@@ -1,0 +1,59 @@
+//
+// "Mutex.ic"
+//
+// Programmer:    Ross Mead
+// Last modified: 24Nov2007
+//
+
+// preprocessor directives
+#use "Boolean.ic"
+
+
+
+// mutual exclusion (mutex) definitions
+#define Mutex          int
+#define MUTEX_UNLOCK   0
+#define MUTEX_LOCK     1
+#define MUTEX_N_CHECKS 40
+
+
+
+// initializes the parameterized mutex,
+// returning TRUE if successful, FALSE otherwise
+BOOL initMutex(Mutex* m)
+{
+    return unlockMutex(m);
+}   // initMutex(Mutex*)
+
+
+
+// attempts to lock the parameterized mutex,
+// returning TRUE if successful, FALSE otherwise
+BOOL lockMutex(Mutex* m)
+{
+    BOOL safe = FALSE;
+    int  i    = 0;
+    if (m == NULL) return FALSE;
+    while (!safe) {
+        safe  = TRUE;
+        for (i = 0; i < MUTEX_N_CHECKS; ++i)
+          if (*m) {
+              safe = FALSE;
+              defer();
+              break;
+          }
+    }
+    *m = MUTEX_LOCK;
+    return TRUE;
+}   // lockMutex(Mutex*)
+
+
+
+// attempts to unlock the parameterized mutex,
+// returning TRUE if successful, FALSE otherwise
+BOOL unlockMutex(Mutex* m)
+{
+    if (m == NULL) return FALSE;
+    *m = MUTEX_UNLOCK;
+    return TRUE;
+}   // unlockMutex(Mutex*)

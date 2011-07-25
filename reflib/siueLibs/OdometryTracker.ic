@@ -1,0 +1,137 @@
+//
+// "OdometryTracker.ic"
+//
+// Programmer:    Ross Mead
+// Last modified: 06Nov2007
+//
+
+// preprocessor directives
+#use "Odometry.ic"
+#use "Pose.ic"
+
+
+
+// defines a 2-dimensional vector
+struct Vector
+{
+    float x, y;
+};  // Vector
+
+
+
+// defines a 2-dimensional robot pose,
+// which includes position and heading
+//#define Position struct Vector
+//#define Heading  struct Vector
+struct Pose
+{
+    Position position;
+    Heading  heading;
+};  // Pose
+
+
+
+// odometry tracker definitions
+#define      ODOMETRY_TRACKER_INTERVAL 50L
+struct Pose _robotPose;
+float       _distTraveled           =  0.0;
+int         _pidOdometryTracker     = -1;
+
+
+
+// enables the odometry tracker, returning
+// TRUE if successful, FALSE otherwise
+BOOL enableOdometryTracker()
+{
+    resetDistanceTraveled();
+    resetPositions();
+    if (!initPose(&_robotPose)) return FALSE;
+    _pidOdometryTracker = start_process(_odometryTrackerProcess());
+    return TRUE;
+}   // enableOdometryTracker()
+
+
+
+// disables the odometry tracker, returning
+// TRUE if successful, FALSE otherwise
+BOOL disableOdometryTracker()
+{
+    kill_process(_pidOdometryTracker);
+    return TRUE;
+}   // disableOdometryTracker()
+
+
+
+// updates the odometry tracker, returning
+// TRUE if successful, FALSE otherwise
+BOOL updateOdometryTracker(long dLTicks, long dRTicks)
+{
+    float  dL       = ticksToInches(dLTicks), dR = ticksToInches(dRTicks);
+    float  dS       = 0.5 * (dR + dL);
+    float  dTheta   = radiansToDegrees((dR - dL) / wheelOffsetDiameter());
+    struct Vector     dV;
+    
+    setVectorPolar(&dV, dS, getPoseHeading(&_robotPose) + dTheta);
+    
+    addVectors(&_robotPose.position, &dV, &_robotPose.position);
+    rotatePose(&_robotPose, dTheta);
+    
+    _distTraveled += fabs(dS);
+    
+    return TRUE;
+}   // updateOdometryTracker(float, float)
+
+
+
+// process that updates the odometryTracker,
+// returning TRUE if successful, FALSE otherwise
+BOOL _odometryTrackerProcess()
+{
+    long currPosLeft = getLeftPosition(), currPosRight = getRightPosition();
+    long prevPosLeft = currPosLeft,       prevPosRight = currPosRight;
+    long tStart      = mseconds();
+    while (TRUE) {
+        if (mseconds() - tStart > ODOMETRY_TRACKER_INTERVAL) {
+            hog_processor();
+            
+            tStart      += ODOMETRY_TRACKER_INTERVAL;
+            
+            currPosLeft  = getLeftPosition();
+            currPosRight = getRightPosition();
+            
+            if (!updateOdometryTracker(currPosLeft  - prevPosLeft,
+                                       currPosRight - prevPosRight))
+              return FALSE;
+            
+            prevPosLeft  = currPosLeft;
+            prevPosRight = currPosRight;
+        }
+        defer();
+    }
+    return TRUE;
+}   // _odometryTrackerProcess()
+
+
+
+// resets the total distance traveled to 0.0
+void resetDistanceTraveled()
+{
+    _distTraveled = 0.0;
+}   // resetDistanceTraveled()
+
+
+
+// returns the total distance traveled
+float getDistanceTraveled()
+{
+    return _distTraveled;
+}   // getDistanceTraveled()
+
+
+
+// prints the robot pose (with an optional label) to the screen,
+// returning TRUE if successful, FALSE otherwise
+BOOL printRobotPose(char label[])
+{
+    return printPose(&_robotPose, label);
+}   // printRobotPose(char [])

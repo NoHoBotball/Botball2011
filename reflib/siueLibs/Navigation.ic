@@ -1,0 +1,353 @@
+//
+// "Navigation.ic"
+//
+// Programmer:    Ross Mead
+// Last modified: 24Jul2007
+//
+
+// preprocessor directives
+#use "Odometry.ic"
+
+
+
+// navigation debug definitions
+//#define DEBUG_NAV 1
+
+
+
+// brakes all of the motors
+void brake()
+{
+    if (enabledBackEMF()) {
+        brakeLeft();
+        brakeRight();
+    }
+    else {
+        #ifdef MOTOR_L0_PORT
+          setMotorVelocity(MOTOR_L0_PORT, -getMotorVelocityArray(MOTOR_L0_PORT));
+        #endif
+        
+        #ifdef MOTOR_R0_PORT
+          setMotorVelocity(MOTOR_R0_PORT, -getMotorVelocityArray(MOTOR_R0_PORT));
+        #endif
+        
+        #ifdef MOTOR_L1_PORT
+          setMotorVelocity(MOTOR_L1_PORT, -getMotorVelocityArray(MOTOR_L1_PORT));
+        #endif
+        
+        #ifdef MOTOR_R1_PORT
+          setMotorVelocity(MOTOR_R1_PORT, -getMotorVelocityArray(MOTOR_R1_PORT));
+        #endif
+        
+        #ifdef MOTOR_BRAKE_SLEEP
+          sleep(MOTOR_BRAKE_SLEEP);
+        #endif
+        
+        #ifdef MOTOR_L0_PORT
+          setMotorVelocity(MOTOR_L0_PORT, 0);
+        #endif
+        
+        #ifdef MOTOR_R0_PORT
+          setMotorVelocity(MOTOR_R0_PORT, 0);
+        #endif
+        
+        #ifdef MOTOR_L1_PORT
+          setMotorVelocity(MOTOR_L1_PORT, 0);
+        #endif
+        
+        #ifdef MOTOR_R1_PORT
+          setMotorVelocity(MOTOR_R1_PORT, 0);
+        #endif
+    }
+}   // brake()
+
+
+
+// drives the robot forward
+void fwd()
+{
+    fwdAt(motorMaxSpeed());
+}   // fwd()
+
+
+
+// drives the robot forward at the parameterized speed
+void fwdAt(int speed)
+{
+    moveAt(speed, speed);
+}   // fwdAt(int)
+
+
+
+// drives the robot forward for the parameterized distance in inches
+void fwdFor(float inches)
+{
+    moveFor(inches, inches);
+}   // fwdFor(float)
+
+
+
+// moves the robot about an arc with the parameterized
+// radius (in inches) and angle (in degrees)
+void moveArc(float radius, float angle)
+{
+    moveArcAt(radius, angle, motorMaxSpeed());
+}   // moveArc(float, float)
+
+
+
+// moves the robot about an arc with the parameterized radius (in inches)
+// and angle (in degrees) at the parameterized speed
+void moveArcAt(float radius, float angle, int speed)
+{
+    float angleRadians   = degreesToRadians(angle);
+    
+    float leftRadius     = radius - 0.5 * wheelOffsetDiameter();
+    float rightRadius    = radius + 0.5 * wheelOffsetDiameter();
+    
+    float leftArcLength  = fabs(leftRadius  * angleRadians);
+    float rightArcLength = fabs(rightRadius * angleRadians);
+    
+    int   leftSpeed      = 0, rightSpeed = 0;
+    
+    speed                = abs(speed);
+    
+    if ((fisEqualToZero(leftArcLength)) &&
+        (fisEqualToZero(rightArcLength))) leftSpeed = rightSpeed = 0;
+    else if (leftArcLength > rightArcLength) {
+        leftSpeed        = speed;
+        rightSpeed       = (int)((float)speed *
+                                 rightArcLength / leftArcLength);
+    }
+    else if (rightArcLength > leftArcLength) {
+        rightSpeed       = speed;
+        leftSpeed        = (int)((float)speed *
+                                 leftArcLength / rightArcLength);
+    }
+    else leftSpeed       = rightSpeed = speed;
+    
+    setLeftFor( leftSpeed, 
+               inchesToTicks(fsign(leftRadius)   * fsign(angleRadians) *
+                             leftArcLength));
+    setRightFor(rightSpeed,
+                inchesToTicks(fsign(rightRadius) * fsign(angleRadians) *
+                              rightArcLength));
+    waitForMoveDone();
+}   // moveArcAt(float, float, int)
+
+
+
+// moves the robot with the parameterized left and right motor velocities
+void moveAt(int lVel, int rVel)
+{
+    setLeftVelocity( lVel);
+    setRightVelocity(rVel);
+}   // moveAt(int, int)
+
+
+
+// moves the robot for the parameterized distance in millimeters
+void moveFor(float lInches, float rInches)
+{
+    int   lSign  = (int)(fsign(lInches)), lSpeed = motorMaxSpeed();
+    int   rSign  = (int)(fsign(rInches)), rSpeed = motorMaxSpeed();
+    float inches = 0.0;
+    
+    lInches      = fabs(lInches);
+    rInches      = fabs(rInches);
+    
+    if     ((lInches <= fepsilon()) &&
+            (rInches <= fepsilon())) lSpeed = rSpeed = 0;
+    else if (lInches >  rInches) {
+        inches   = lInches;
+        lSpeed   = motorMaxSpeed();
+        rSpeed   = (int)(fabs((float)(motorMaxSpeed()) * rInches / lInches));
+    }
+    else if (rInches >  lInches) {
+        inches   = rInches;
+        rSpeed   = motorMaxSpeed();
+        lSpeed   = (int)(fabs((float)(motorMaxSpeed()) * lInches / rInches));
+    }
+    else inches  = fmid(lInches, rInches);
+    
+    if (enabledBackEMF()) {
+        setLeftFor( lSpeed, (long)(lSign) * inchesToTicks(lInches));
+        setRightFor(rSpeed, (long)(rSign) * inchesToTicks(rInches));
+        waitForMoveDone();
+    }
+    else {
+        moveAt(lSign * lSpeed, rSign * rSpeed);
+        
+        #ifdef SLEEP_TIME_PER_INCH
+          sleep(inches * SLEEP_TIME_PER_INCH);
+        #endif
+        
+        brake();
+    }
+}   // moveFor(float, float)
+
+
+
+// moves the robot based on the parameterized
+// relative x-/y-values (in inches)
+void moveXY(float x, float y)
+{
+    moveXYAt(x, y, motorMaxSpeed());
+}   // moveXY(float, float)
+
+
+
+// moves the robot based on the parameterized relative
+// x-/y-values (in inches) at the parameterized speed
+void moveXYAt(float x, float y, int speed)
+{
+    float theta = atan2(y, x);
+    if (fisEqualToZero(theta) || fcompare(fabs(theta), PI))
+      moveFor(x, x);
+    else moveArcAt(0.5 * dist(0.0, 0.0, x, y) / sin(theta),
+                   theta = radiansToDegrees(2.0 * theta),
+                   abs(speed));
+    rotateFor(-theta);   // resets to initial orientation
+}   // moveXYAt(float, float, int)
+
+
+
+// drives the robot reverse
+void rev()
+{
+    revAt(motorMaxSpeed());
+}   // rev()
+
+
+
+// drives the robot reverse at the parameterized speed
+void revAt(int speed)
+{
+    moveAt(-speed, -speed);
+}   // revAt(int)
+
+
+
+// drives the robot reverse for the parameterized distance in inches
+void revFor(float inches)
+{
+    moveFor(-inches, -inches);
+}   // revFor(inches)
+
+
+
+// rotates the robot (left)
+void rotate()
+{
+    rotateAt(motorMaxSpeed());
+}   // rotate()
+
+
+
+// rotates the robot (left) at the parameterized speed
+void rotateAt(int speed)
+{
+    moveAt(-speed, speed);
+}   // rotateAt(int)
+
+
+
+// rotates the robot (left) the parameterized number of degrees
+void rotateFor(float degrees)
+{
+    float inches = degreesToInches(degrees);
+    moveFor(-inches, inches);
+}   // rotateFor(float)
+
+
+
+// rotates the robot left
+void rotateLeft()
+{
+    rotateLeftAt(motorMaxSpeed());
+}   // rotateLeft()
+
+
+
+// rotates the robot left at the parameterized speed
+void rotateLeftAt(int speed)
+{
+    rotateAt(speed);
+}   // rotateAt(int)
+
+
+
+// rotates the robot left the parameterized number of degrees
+void rotateLeftFor(float degrees)
+{
+    rotateFor(degrees);
+}   // rotateLeftFor(float)
+
+
+
+// rotates the robot right
+void rotateRight()
+{
+    rotateRightAt(motorMaxSpeed());
+}   // rotateRight()
+
+
+
+// rotates the robot right at the parameterized speed
+void rotateRightAt(int speed)
+{
+    rotateAt(-speed);
+}   // rotateRightAt(int)
+
+
+
+// rotates the robot right the parameterized number of degrees
+void rotateRightFor(float degrees)
+{
+    rotateFor(-degrees);
+}   // rotateRightFor(float)
+
+
+
+// waits for the robot to finish moving
+void waitForMoveDone()
+{
+    waitForLeftDone();
+    waitForRightDone();
+}   // waitForMoveDone()
+
+
+
+#ifdef DEBUG_NAV
+int main()
+{
+    float x = 0.0, y = 0.0, delta = 1.0;
+    
+    display_clear();
+    while (!b_button()) {
+        if      (up_button())    {
+            printf("(%f, %f)\n", x += delta, y);
+            while (up_button());
+        }
+        else if (down_button())  {
+            printf("(%f, %f)\n", x -= delta, y);
+            while (down_button());
+        }
+        else if (left_button())  {
+            printf("(%f, %f)\n", x, y += delta);
+            while (left_button());
+        }
+        else if (right_button()) {
+            printf("(%f, %f)\n", x, y -= delta);
+            while (right_button());
+        }
+        else if (a_button())     {
+            printf("Moving (%f, %f)\n", x, y);
+            moveXY(x, y);
+            while (a_button());
+        }
+    }
+    
+    return 0;
+}   // main()
+#endif

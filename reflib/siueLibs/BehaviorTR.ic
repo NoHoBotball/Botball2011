@@ -1,0 +1,365 @@
+//
+// "BehaviorTR.ic"
+//
+// Programmer:    Ross Mead
+// Last modified: 25Jan2008
+//
+
+// preprocessor directives
+#use "Behavior.ic"
+#use "Math.ic"
+
+
+
+// behavior debug definitions
+#define DEBUG_BEHAVIOR_TR 1
+
+
+
+// defines a robot behavior
+struct Behavior
+{
+    BehaviorType type;
+    int          status;
+};  // Behavior
+
+
+
+// defines a robot behavior based on
+// translational and rotational velocities
+struct BehaviorTR
+{
+    struct Behavior beh;
+    float           transVel, rotVel, maxSpeed;
+};  // BehaviorTR
+
+
+
+// initializes the parameterized behavior,
+// returning TRUE if successful, FALSE otherwise
+BOOL initBehaviorTR(struct BehaviorTR* b)
+{
+    return initBehavior( &b->beh) &&
+      setBehaviorMaxSpeed(b, 1.0) &&
+      setBehaviorVel(     b, 0.0, 0.0);
+}   // initBehaviorTR(struct BehaviorTR*)
+
+
+
+// sets the parameterized behavior to the parameterized values,
+// returning TRUE if successful, FALSE otherwise
+BOOL setBehaviorTR(struct BehaviorTR* b, BehaviorType type, int   s,
+                   float              t, float        r,    float max)
+{
+    return setBehavior(  &b->beh, type, s) &&
+      setBehaviorMaxSpeed(b,      max)     &&
+      setBehaviorVel(     b,      t,    r);
+}   // setBehavior(... BehaviorTR*, BehaviorType, int, float..<3>)
+
+
+
+// sets the type of the parameterized behavior
+// to the parameterized name, returning
+// TRUE if successful, FALSE otherwise
+BOOL setBehaviorTRType(struct BehaviorTR* b, BehaviorType type)
+{
+    if (b == NULL) return FALSE;
+    return setBehaviorType(&b->beh, type);
+}   // setBehaviorTRName(struct BehaviorTR*, BehaviorType)
+
+
+
+// sets the status of the parameterized behavior
+// to the parameterized status, returning
+// TRUE if successful, FALSE otherwise
+BOOL setBehaviorTRStatus(struct BehaviorTR* b, int s)
+{
+    if (b == NULL) return FALSE;
+    return setBehaviorStatus(&b->beh, s);
+}   // setBehaviorTRStatus(struct Behavior*, int)
+
+
+
+// sets the translational velocity of the parameterized
+// behavior to the parameterized translational velocity,
+// returning TRUE if successful, FALSE otherwise
+BOOL setBehaviorTransVel(struct BehaviorTR* b, float t)
+{
+    if (b == NULL) return FALSE;
+    b->transVel = t;
+    scaleBehaviorVel(b);
+    return TRUE;
+}   // setBehaviorTransVel(struct BehaviorTR*, float)
+
+
+
+// sets the rotational velocity of the parameterized
+// behavior to the parameterized rotational velocity,
+// returning TRUE if successful, FALSE otherwise
+BOOL setBehaviorRotVel(struct BehaviorTR* b, float r)
+{
+    if (b == NULL) return FALSE;
+    b->rotVel = r;
+    scaleBehaviorVel(b);
+    return TRUE;
+}   // setBehaviorRotVel(struct BehaviorTR*, float)
+
+
+
+// sets the translational and rotational velocities of the
+// parameterized behavior based on left and right (differential)
+// velocities, returning TRUE if successful, FALSE otherwise
+BOOL setBehaviorDiffVel(struct BehaviorTR* b, float l, float r)
+{
+    return setBehaviorVel(b, 0.5 * (r + l), r - l);
+}   // setBehaviorDiffVel(struct BehaviorTR*, float, float)
+
+
+
+// sets the translational and rotational velocities of the
+// parameterized behavior to the parameterized values,
+// returning TRUE if successful, FALSE otherwise
+BOOL setBehaviorVel(struct BehaviorTR* b, float t, float r)
+{
+    if (b == NULL) return FALSE;
+    b->transVel = t;
+    b->rotVel   = r;
+    scaleBehaviorVel(b);
+    return TRUE;
+}   // setBehaviorVel(struct BehaviorTR*, float, float)
+
+
+
+// sets the maximum speed of the parameterized
+// behavior to the parameterized speed, returning
+// TRUE if successful, FALSE otherwise
+BOOL setBehaviorMaxSpeed(struct BehaviorTR* b, float max)
+{
+    if ((b == NULL) || (max < 0.0)) return FALSE;
+    b->maxSpeed = max;
+    scaleBehaviorVel(b);
+    return TRUE;
+}   // setBehaviorMaxSpeed(struct BehaviorTR*, float)
+
+
+
+// copies the contents of the parameterized source
+// behavior into the parameterized destination behavior
+// returning TRUE if successful, FALSE otherwise
+BOOL copyBehaviorTR(struct BehaviorTR* src, struct BehaviorTR* dest)
+{
+    if (src == NULL) return FALSE;
+    return setBehaviorTR(dest,          src->beh.type, src->beh.status,
+                         src->transVel, src->rotVel,   src->maxSpeed);
+}   // copyBehavior(struct BehaviorTR*, struct BehaviorTR*)
+
+
+
+// returns the scalar used to scale the velocity of the
+// parameterized behavior based on its maximum speed
+float scaleBehaviorVel(struct BehaviorTR* b)
+{
+    float scale      = 0.0;
+    if ((b != NULL) && (!fisEqualToZero(getBehaviorSpeed(b))) &&
+        ((scale      = b->maxSpeed / getBehaviorSpeed(b)) < 1.0)) {
+        b->transVel *= scale;
+        b->rotVel   *= scale;
+    }
+    return scale;
+}   // scaleBehaviorVel(struct BehaviorTR*)
+
+
+
+// returns the velocity of the parameterized behavior
+float getBehaviorVelocity(struct BehaviorTR* b)
+{
+    if (b == NULL) return 0.0;
+    return b->transVel + b->rotVel;
+}   // getBehaviorVelocity(struct BehaviorTR*)
+
+
+
+// returns the left (differential) velocity
+// of the parameterized behavior
+float getBehaviorLeftVelocity(struct BehaviorTR* b)
+{
+    return b->transVel - b->rotVel;
+}   // getBehaviorLeftVel(struct BehaviorTR*)
+
+
+
+// returns the right (differential) velocity
+// of the parameterized behavior
+float getBehaviorRightVelocity(struct BehaviorTR* b)
+{
+    return b->transVel + b->rotVel;
+}   // getBehaviorRightVel(struct BehaviorTR*)
+
+
+
+// returns the speed of the parameterized behavior
+float getBehaviorSpeed(struct BehaviorTR* b)
+{
+    return fabs(getBehaviorVelocity(b));
+}   // getBehaviorSpeed(struct BehaviorTR*)
+
+
+
+// returns TRUE if the status of the parameterized
+// behavior is ACTIVE, FALSE otherwise
+BOOL isBehaviorTRActive(struct BehaviorTR* b)
+{
+    return isBehaviorTRStatus(b, BEH_ACTIVE);
+}   // isBehaviorTRActive(struct BehaviorTR*)
+
+
+
+// returns TRUE if the status of the parameterized
+// behavior is DONE, FALSE otherwise
+BOOL isBehaviorTRDone(struct BehaviorTR* b)
+{
+    return isBehaviorTRStatus(b, BEH_DONE);
+}   // isBehaviorDone(struct BehaviorTR*)
+
+
+
+// returns TRUE if the status of the parameterized
+// behavior is INACTIVE, FALSE otherwise
+BOOL isBehaviorTRInactive(struct BehaviorTR* b)
+{
+    return isBehaviorTRStatus(b, BEH_INACTIVE);
+}   // isBehaviorInactive(struct BehaviorTR*)
+
+
+
+// returns TRUE if the status of the parameterized
+// behavior is equal to the parameterized status, FALSE otherwise
+BOOL isBehaviorTRStatus(struct BehaviorTR* b, int s)
+{
+    if (b == NULL) return FALSE;
+    return isBehaviorStatus(&b->beh, s);
+}   // isBehaviorTRStatus(struct BehaviorTR*, int)
+
+
+
+// sets the parameterized destination behavior to the
+// parameterized behavior with the highest activation level,
+// returning TRUE if successful, FALSE otherwise
+BOOL subsumeBehaviorsTR(struct BehaviorTR* bHigh,
+                        struct BehaviorTR* bLow,
+                        struct BehaviorTR* b)
+{
+    if ((b    == NULL) || ((bHigh == NULL) && (bLow == NULL))) return FALSE;
+    if (bHigh == NULL)                        return copyBehaviorTR(bLow,  b);
+    if (bLow  == NULL)                        return copyBehaviorTR(bHigh, b);
+    if (bLow->beh.status > bHigh->beh.status) return copyBehaviorTR(bLow,  b);
+    return                                           copyBehaviorTR(bHigh, b);
+}   // subsumeBehaviorsTR(struct BehaviorTR*, struct BehaviorTR*, struct BehaviorTR*)
+
+
+
+// sets the parameterized destination behavior to the
+// to the sum of the parameterized behaviors,
+// returning TRUE if successful, FALSE otherwise
+BOOL sumBehaviorsTR(struct BehaviorTR* b1,
+                    struct BehaviorTR* b2,
+                    struct BehaviorTR* b)
+{
+    if ((b  == NULL) || ((b1 == NULL) &&  (b2 == NULL))) return FALSE;
+    if (b1  == NULL)                          return copyBehaviorTR(b2, b);
+    if (b2  == NULL)                          return copyBehaviorTR(b1, b);
+    if (b1->beh.status == b2->beh.status)
+      return setBehaviorTR(b,
+                           BEH_NO_NAME,
+                           max(b1->beh.status, b2->beh.status),
+                           b1->transVel +      b2->transVel,
+                           b1->rotVel   +      b2->rotVel,
+                           fmin(b1->maxSpeed,  b2->maxSpeed));
+    else if (b2->beh.status > b1->beh.status) return copyBehaviorTR(b2, b);
+    else                                      return copyBehaviorTR(b1, b);
+}   // sumBehaviors(struct BehaviorTR*, struct BehaviorTR*, struct BehaviorTR*)
+
+
+
+// sets the parameterized destination behavior to the
+// to the average of the parameterized behaviors,
+// returning TRUE if successful, FALSE otherwise
+BOOL avgBehaviorsTR(struct BehaviorTR* b1,
+                    struct BehaviorTR* b2,
+                    struct BehaviorTR* b)
+{
+    if ((b  == NULL) || ((b1 == NULL) &&  (b2 == NULL))) return FALSE;
+    if (b1 == NULL)                           return copyBehaviorTR(b2, b);
+    if (b2 == NULL)                           return copyBehaviorTR(b1, b);
+    if (b1->beh.status == b2->beh.status)
+      return setBehaviorTR(b,
+                           BEH_NO_NAME,
+                           max(b1->beh.status, b2->beh.status),
+                           fmid(b1->transVel,  b2->transVel),
+                           fmid(b1->rotVel,    b2->rotVel),
+                           fmin(b1->maxSpeed,  b2->maxSpeed));
+    else if (b2->beh.status > b1->beh.status) return copyBehaviorTR(b2, b);
+    else                                      return copyBehaviorTR(b1, b);
+}   // avgBehaviors(struct BehaviorTR*, struct BehaviorTR*, struct BehaviorTR*)
+
+
+
+// compares the two parameterized behaviors for equality,
+// returning TRUE if they are the same, FALSE otherwise
+BOOL compareBehaviorsTR(struct BehaviorTR* b1, struct BehaviorTR* b2)
+{
+    if ((b1 == NULL) || (b2 == NULL)) return FALSE;
+    return compareBehaviors(&b1->beh, &b2->beh) &&
+      fcompare(b1->transVel, b2->transVel)      &&
+      fcompare(b1->rotVel,   b2->rotVel)        &&
+      fcompare(b1->maxSpeed, b2->maxSpeed);
+}   // equalBehaviors(struct BehaviorTR*, struct BehaviorTR*)
+
+
+
+// prints the parameterized behavior (with an optional label) to the screen
+BOOL printBehaviorTR(struct BehaviorTR* b, char label[])
+{
+    BOOL retVal = FALSE;
+    if (b == NULL) return FALSE;
+    retVal = printBehavior(&b->beh, label);
+    printf("- (%f, %f)\n", b->transVel, b->rotVel);
+    return retVal;
+}   // printBehaviorTR(struct BehaviorTR*, char*)
+
+
+
+#ifdef  DEBUG_BEHAVIOR_TR
+#define BEH_TEST_1 1
+#define BEH_TEST_2 2
+int main()
+{
+    struct BehaviorTR b1, b2;
+    
+    printf("\ninit\n");
+    initBehaviorTR(&b1);
+    setBehaviorTR(&b2, BEH_TEST_2, BEH_ACTIVE, 1.5, 0.5, 1.0);
+    printBehaviorTR(&b1, "b1");
+    printBehaviorTR(&b2, "b2");
+    
+    printf("\ncopy\n");
+    copyBehaviorTR(&b2, &b1);
+    printBehaviorTR(&b1, "b1");
+    
+    //printf("\nisBehaviorActive? %d\n", isBehaviorActive(&b1));
+    
+    printf("\nsubsume\n");
+    setBehaviorTR(&b1, BEH_TEST_1, BEH_INACTIVE, 2.0, 0.5, 1.0);
+    setBehaviorTR(&b2, BEH_TEST_2, BEH_DONE,     1.5, 0.5, 1.0);
+    subsumeBehaviorsTR(&b1, &b2, &b1);
+    printBehaviorTR(&b1, "b1");
+    
+    printf("\nsum\n");
+    setBehaviorTR(&b1, BEH_TEST_1, BEH_INACTIVE, 2.0, 0.5, 1.0);
+    setBehaviorTR(&b2, BEH_TEST_2, BEH_DONE,     1.5, 0.5, 1.0);
+    sumBehaviorsTR(&b1, &b2, &b1);
+    printBehaviorTR(&b1, "b1");
+    
+    return 0;
+}   // main()
+#endif

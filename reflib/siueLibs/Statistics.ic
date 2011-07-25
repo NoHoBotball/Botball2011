@@ -1,0 +1,113 @@
+//
+// "Statistics.ic"
+//
+// Programmer:    Ross Mead
+// Last modified: 22Jun2007
+//
+
+// preprocessor directives
+#use "Array.ic"
+
+
+
+// returns the average (mean) of the
+// parameterized array of integers
+float avg(int samples[])
+{
+    return mean(samples);
+}   // avg(int [])
+
+
+
+// returns the average (mean) of the
+// parameterized array of floating-point numbers
+float favg(float samples[])
+{
+    return fmean(samples);
+}   // favg(float [])
+
+
+
+// returns the mean (average) of the
+// parameterized array of floating-point numbers
+float fmean(float samples[])
+{
+    return fsum(samples) / (float)(_array_size(samples));
+}   // fmean(float [])
+
+
+
+// returns the sum of the parameterized
+// array of floating-point numbers
+float fsum(float samples[])
+{
+    int    i   = 0,     n = _array_size(samples);
+    float  sum = 0.0;
+    for (  i   = 0; i < n; ++i) sum += samples[i];
+    return sum;
+}   // fsum(float [])
+
+
+
+// returns the average (mean) of the
+// parameterized array of long integers
+float lavg(long samples[])
+{
+    return lmean(samples);
+}   // lavg(long [])
+
+
+
+// returns the mean (average) of the
+// parameterized array of long integers
+float lmean(long samples[])
+{
+    return (float)(lsum(samples)) / (float)(_array_size(samples));
+}   // lmean(long [])
+
+
+
+// returns the sum of the parameterized array of long integers
+long lsum(long samples[])
+{
+    int    i   = 0,     n = _array_size(samples);
+    long   sum = 0L;
+    for (  i   = 0; i < n; ++i) sum += samples[i];
+    return sum;
+}   // lsum(long [])
+
+
+
+// returns the mean (average) of the
+// parameterized array of integers
+float mean(int samples[])
+{
+    return (float)(sum(samples)) / (float)(_array_size(samples));
+}   // mean(int [])
+
+
+
+// returns the median of the
+// parameterized array of integers
+float median(int samples[])
+{
+    int n = _array_size(samples);
+    
+    if (arraySort(samples))
+      if (isOdd(n))
+        return       (float)(samples[ n      / 2]);
+      else
+        return 0.5 * (float)(samples[(n - 1) / 2]  +
+                             samples[ n      / 2]);
+    return 0.0;
+}   // median(int [])
+
+
+
+// returns the sum of the parameterized array of integers
+int sum(int samples[])
+{
+    int  i = 0,     n = _array_size(samples), sum = 0;
+    for (i = 0; i < n; ++i) sum += samples[i];
+    return sum;
+}   // sum(int [])

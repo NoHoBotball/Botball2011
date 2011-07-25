@@ -1,0 +1,13 @@
+//
+// "Boolean.ic"
+//
+// Programmer:    Ross Mead
+// Last modified: 22Jun2007
+//
+
+
+
+// boolean definitions
+#define BOOL  int
+#define FALSE 0
+#define TRUE  1
